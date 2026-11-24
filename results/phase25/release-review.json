@@ -1,0 +1,28 @@
+{
+  "stage": 25,
+  "version": "1.0.0-rc16",
+  "checkedAtUtc": "2026-11-24T07:25:03.055782+00:00",
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD",
+  "officialAgentSha256": null,
+  "blockingReasons": [
+    "Missing official-runtime files: target/runtime-sbom-agent-1.0.0-rc16.jar, results/phase22/build.json, results/phase22/binary-audit.json, results/phase22/jdk/jdk-8.json, results/phase22/jdk/jdk-8-sbom.json, results/phase22/jdk/jdk-11.json, results/phase22/jdk/jdk-11-sbom.json, results/phase22/jdk/jdk-17.json",
+    "ASM-shaded release JAR structural audit unavailable/failed",
+    "Maven build log/effective ASM dependency proof missing or SHA mismatch",
+    "JDK 8 official same-binary runtime evidence missing/invalid",
+    "JDK 11 official same-binary runtime evidence missing/invalid",
+    "JDK 17 official same-binary runtime evidence missing/invalid",
+    "JDK 21 official same-binary runtime evidence missing/invalid",
+    "spring-boot2 live HTTP and independent archive evidence missing/invalid/SLO failed",
+    "spring-boot3 live HTTP and independent archive evidence missing/invalid/SLO failed",
+    "tomcat9 live HTTP and independent archive evidence missing/invalid/SLO failed",
+    "tomcat10 live HTTP and independent archive evidence missing/invalid/SLO failed",
+    "JDK 8 SBOM quality/version mismatch: {'sbomReadable': False}",
+    "JDK 11 SBOM quality/version mismatch: {'sbomReadable': False}",
+    "JDK 17 SBOM quality/version mismatch: {'sbomReadable': False}",
+    "JDK 21 SBOM quality/version mismatch: {'sbomReadable': False}",
+    "MAVEN_MISSING: Install Maven and rerun the official release build."
+  ],
+  "nextAction": "Resolve diagnostics and collect real official build/JDK/WAS evidence",
+  "note": "No automatic deployment is authorized by this result"
+}

@@ -1,0 +1,19 @@
+test_duplicate_zip_entries_rejected (test_phase22_binary_audit.BinaryAuditNegativeTest.test_duplicate_zip_entries_rejected) ... ok
+test_java17_class_in_root_rejected (test_phase22_binary_audit.BinaryAuditNegativeTest.test_java17_class_in_root_rejected) ... ok
+test_missing_agent_rejected (test_phase22_binary_audit.BinaryAuditNegativeTest.test_missing_agent_rejected) ... ok
+test_archive_mismatch_rejected (test_phase22_release.Phase22AcceptanceTest.test_archive_mismatch_rejected) ... ok
+test_consistent_fixture_allows_only_human_review (test_phase22_release.Phase22AcceptanceTest.test_consistent_fixture_allows_only_human_review) ... ok
+test_false_execution_claim_on_loading_only_is_rejected (test_phase22_release.Phase22AcceptanceTest.test_false_execution_claim_on_loading_only_is_rejected) ... ok
+test_missing_build_proof_is_rejected (test_phase22_release.Phase22AcceptanceTest.test_missing_build_proof_is_rejected) ... ok
+test_missing_jdk_is_hold (test_phase22_release.Phase22AcceptanceTest.test_missing_jdk_is_hold) ... ok
+test_nan_performance_rejected (test_phase22_release.Phase22AcceptanceTest.test_nan_performance_rejected) ... ok
+test_no_official_jar_still_hold_with_real_audit (test_phase22_release.Phase22AcceptanceTest.test_no_official_jar_still_hold_with_real_audit) ... ok
+test_p95_regression_rejected (test_phase22_release.Phase22AcceptanceTest.test_p95_regression_rejected) ... ok
+test_test_only_agent_evidence_is_rejected (test_phase22_release.Phase22AcceptanceTest.test_test_only_agent_evidence_is_rejected) ... ok
+test_wrong_agent_sha_is_rejected (test_phase22_release.Phase22AcceptanceTest.test_wrong_agent_sha_is_rejected) ... ok
+test_wrong_asm_dependency_is_rejected (test_phase22_release.Phase22AcceptanceTest.test_wrong_asm_dependency_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.027s
+
+OK

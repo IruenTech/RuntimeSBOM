@@ -1,0 +1,47 @@
+{
+  "stage": 24,
+  "version": "1.0.0-rc16",
+  "checkedAtUtc": "2026-11-24T07:23:51.416155+00:00",
+  "offlineValidation": "PASS",
+  "groups": [
+    {
+      "name": "new-24-unit-tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "elapsedSeconds": 0.97,
+      "log": "results/phase24/new-24-unit-tests.log"
+    },
+    {
+      "name": "workflow-contract",
+      "status": "PASS",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "elapsedSeconds": 0.8,
+      "log": "results/phase24/workflow-contract.log"
+    },
+    {
+      "name": "official-preflight-expected-hold",
+      "status": "PASS",
+      "exitCode": 3,
+      "expectedExit": 3,
+      "elapsedSeconds": 0.96,
+      "log": "results/phase24/official-preflight-expected-hold.log"
+    },
+    {
+      "name": "official-manifest-expected-hold",
+      "status": "PASS",
+      "exitCode": 3,
+      "expectedExit": 3,
+      "elapsedSeconds": 0.91,
+      "log": "results/phase24/official-manifest-expected-hold.log"
+    }
+  ],
+  "sdk": "JDK 21 test-only internal ASM; Java 8 target bytecode",
+  "mavenOfficialAsmBuild": "NOT_EXECUTED_MAVEN_AND_NETWORK_UNAVAILABLE",
+  "liveSpringBootTomcat": "NOT_EXECUTED_OFFICIAL_AGENT_UNAVAILABLE",
+  "liveJeusWeblogicAix": "NOT_EXECUTED_VENDOR_ENVIRONMENT_UNAVAILABLE",
+  "githubActions": "CONFIGURED_NOT_EXECUTED_IN_THIS_CONTAINER",
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD"
+}

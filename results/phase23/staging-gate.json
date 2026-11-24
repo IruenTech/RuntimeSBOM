@@ -1,0 +1,28 @@
+{
+  "stage": 23,
+  "version": "1.0.0-rc16",
+  "baseEvidenceReview": "HOLD",
+  "observabilityChecks": {
+    "jdk8": "MISSING",
+    "jdk11": "MISSING",
+    "jdk17": "MISSING",
+    "jdk21": "MISSING",
+    "spring-boot2": "MISSING",
+    "spring-boot3": "MISSING",
+    "tomcat9": "MISSING",
+    "tomcat10": "MISSING"
+  },
+  "blockingReasons": [
+    "JDK 8 quality does not establish unsampled, attributable method evidence",
+    "JDK 11 quality does not establish unsampled, attributable method evidence",
+    "JDK 17 quality does not establish unsampled, attributable method evidence",
+    "JDK 21 quality does not establish unsampled, attributable method evidence",
+    "spring-boot2 quality does not establish unsampled, attributable method evidence",
+    "spring-boot3 quality does not establish unsampled, attributable method evidence",
+    "tomcat9 quality does not establish unsampled, attributable method evidence",
+    "tomcat10 quality does not establish unsampled, attributable method evidence"
+  ],
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD",
+  "limitations": "Observation status is not a quantitative completeness estimate; vendor WAS/AIX not certified"
+}

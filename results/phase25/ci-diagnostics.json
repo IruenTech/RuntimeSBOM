@@ -1,0 +1,26 @@
+{
+  "stage": 25,
+  "reportType": "CI_FAILURE_DIAGNOSTICS",
+  "inputs": [
+    {
+      "path": "results/phase25/official-build-attempt.log",
+      "available": true,
+      "logSha256": "4463700667935ffab2bf835726994a870c1075bb076f9cd0ad23cfe709deb83e",
+      "bytes": 56,
+      "status": "BLOCKED",
+      "diagnoses": [
+        {
+          "code": "MAVEN_MISSING",
+          "recommendedAction": "Install Maven and rerun the official release build."
+        }
+      ],
+      "recognizedFailureCount": 1,
+      "officialBuildPassed": false,
+      "productionDeployment": "HOLD"
+    }
+  ],
+  "status": "ISSUES_IDENTIFIED",
+  "officialBuildPassed": false,
+  "productionDeployment": "HOLD",
+  "note": "Log-pattern diagnosis only; no execution or official build is implied"
+}

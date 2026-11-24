@@ -1,0 +1,22 @@
+test_does_not_claim_deployment_if_maven_installed (test_phase25_pipeline.BuildPreflight.test_does_not_claim_deployment_if_maven_installed) ... ok
+test_fails_closed_when_maven_missing (test_phase25_pipeline.BuildPreflight.test_fails_closed_when_maven_missing) ... ok
+test_official_asm_java8_shading_configuration (test_phase25_pipeline.BuildPreflight.test_official_asm_java8_shading_configuration) ... ok
+test_rejects_missing_shading (test_phase25_pipeline.BuildPreflight.test_rejects_missing_shading) ... ok
+test_rejects_wrong_asm_version (test_phase25_pipeline.BuildPreflight.test_rejects_wrong_asm_version) ... ok
+test_artifact_sha_mismatch (test_phase25_pipeline.FailureDiagnostics.test_artifact_sha_mismatch) ... ok
+test_class_linkage (test_phase25_pipeline.FailureDiagnostics.test_class_linkage) ... ok
+test_diagnostics_do_not_copy_log_raw_text (test_phase25_pipeline.FailureDiagnostics.test_diagnostics_do_not_copy_log_raw_text) ... ok
+test_dns_failure_classification (test_phase25_pipeline.FailureDiagnostics.test_dns_failure_classification) ... ok
+test_maven_artifact_resolution (test_phase25_pipeline.FailureDiagnostics.test_maven_artifact_resolution) ... ok
+test_method_verification (test_phase25_pipeline.FailureDiagnostics.test_method_verification) ... ok
+test_missing_log_not_success (test_phase25_pipeline.FailureDiagnostics.test_missing_log_not_success) ... ok
+test_unsupported_bytecode (test_phase25_pipeline.FailureDiagnostics.test_unsupported_bytecode) ... ok
+test_diagnostic_blocks_synthetic_eligibility (test_phase25_pipeline.ReviewTests.test_diagnostic_blocks_synthetic_eligibility) ... ok
+test_missing_staging_is_hold (test_phase25_pipeline.ReviewTests.test_missing_staging_is_hold) ... ok
+test_official_build_pipeline_is_primary_workflow (test_phase25_pipeline.ReviewTests.test_official_build_pipeline_is_primary_workflow) ... ok
+test_valid_staging_only_enables_human_review (test_phase25_pipeline.ReviewTests.test_valid_staging_only_enables_human_review) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.009s
+
+OK

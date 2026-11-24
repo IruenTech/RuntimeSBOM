@@ -1,0 +1,164 @@
+name: Phase24 official ASM exact-binary staging (never auto-deploy)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: runtimesbom-phase24-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  official-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline negative/CI contract tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_phase24_*.py' -v
+          python3 scripts/phase24-ci-contract.py
+      - name: Real Maven ASM 9.7.1 build and exhaustive SHA/bytecode audit
+        run: |
+          sh scripts/phase22-official-build.sh
+          python3 scripts/phase24-check-binary.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase24-official-exact-binary
+          path: |
+            target/runtime-sbom-agent-1.0.0-rc16.jar
+            results/phase22/build.json
+            results/phase22/binary-audit.json
+            results/phase22/maven-package.log
+            results/phase22/asm-dependency-tree.log
+          if-no-files-found: warn
+          retention-days: 14
+  jdk-matrix:
+    needs: official-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['8', '11', '17', '21']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase24-official-exact-binary
+          path: .
+      - name: Verify artifact SHA from build job before executing it
+        run: python3 scripts/phase24-check-binary.py
+      - name: JDK ${{ matrix.jdk }} executable smoke and evidence
+        run: sh scripts/phase22-jdk-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase24-jdk-${{ matrix.jdk }}
+          path: results/phase22/jdk/
+          if-no-files-found: warn
+  was-matrix:
+    needs: official-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {app: spring-boot2, jdk: '8'}
+          - {app: spring-boot3, jdk: '17'}
+          - {app: tomcat9, jdk: '8'}
+          - {app: tomcat10, jdk: '17'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase24-official-exact-binary
+          path: .
+      - name: Verify official binary integrity before starting WAS
+        run: python3 scripts/phase24-check-binary.py
+      - name: Download pinned checksum-verified Tomcat staging installation
+        if: startsWith(matrix.app, 'tomcat')
+        run: |
+          if [ "${{ matrix.app }}" = 'tomcat9' ]; then
+            sh scripts/phase22-install-tomcat.sh 9.0.107 "$RUNNER_TEMP/tomcat"
+          else
+            sh scripts/phase22-install-tomcat.sh 10.1.43 "$RUNNER_TEMP/tomcat"
+          fi
+      - name: Actual HTTP + exact JAR byte SHA + method-entry evidence
+        run: |
+          if [ "${{ matrix.app }}" = tomcat9 ] || [ "${{ matrix.app }}" = tomcat10 ]; then
+            python3 scripts/phase21-staging-live.py --app '${{ matrix.app }}' --tomcat-home "$RUNNER_TEMP/tomcat" --out-dir results/phase22/live --duration 12 --concurrency 8
+          else
+            python3 scripts/phase21-staging-live.py --app '${{ matrix.app }}' --out-dir results/phase22/live --duration 12 --concurrency 8
+          fi
+      - name: Preserve WAS directory when uploading per-matrix evidence
+        if: always()
+        run: |
+          mkdir -p "ci/was-evidence/${{ matrix.app }}"
+          if [ -d "results/phase22/live/${{ matrix.app }}" ]; then
+            cp -a "results/phase22/live/${{ matrix.app }}/." "ci/was-evidence/${{ matrix.app }}/"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase24-was-${{ matrix.app }}
+          path: ci/was-evidence/
+          if-no-files-found: warn
+  review:
+    needs: [official-build, jdk-matrix, was-matrix]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: phase24-official-exact-binary
+          path: .
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: phase24-jdk-*
+          path: results/phase22/jdk
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: phase24-was-*
+          path: results/phase22/live
+          merge-multiple: true
+      - name: Fail closed on missing/mismatched binary, JDK/WAS, or SBOM quality evidence
+        run: python3 scripts/phase24-staging-manifest.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase24-exact-binary-review-report
+          path: results/phase24/staging-manifest.json
+          if-no-files-found: warn

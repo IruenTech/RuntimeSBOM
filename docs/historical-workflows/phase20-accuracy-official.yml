@@ -1,0 +1,115 @@
+name: Phase20 fixture accuracy and official shaded ASM verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-fixture-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify independent fixture accuracy and mutation tests
+        run: |
+          python3 -m unittest discover -s tests -p test_phase20_accuracy.py -v
+          sh scripts/phase20-fixture-gate.sh jdk-internal
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase20-synthetic-fixture-accuracy
+          path: results/phase20/
+          if-no-files-found: warn
+  official-jar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build and audit official ASM 9.7.1 shaded distributable JAR
+        run: sh scripts/phase20-official-verify.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase20-official-agent-exact-binary
+          path: target/runtime-sbom-agent-1.0.0-rc12.jar
+          if-no-files-found: error
+  jdk-compatibility:
+    needs: official-jar
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['8','11','17','21']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase20-official-agent-exact-binary
+          path: target
+      - name: Smoke and exact identity on each JDK
+        run: |
+          sh scripts/phase18-verify-official-binary.sh
+          sh scripts/phase20-fixture-gate.sh official
+          mkdir -p results/phase20/jdk-matrix
+          cp results/phase18/jdk-evidence.json results/phase20/jdk-matrix/jdk-${{ matrix.jdk }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase20-jdk-${{ matrix.jdk }}-results
+          path: |
+            results/phase20/
+            results/phase18/jdk-evidence.json
+          if-no-files-found: warn
+  spring-boot-staging:
+    needs: official-jar
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: spring-boot2
+            jdk: '8'
+          - app: spring-boot3
+            jdk: '17'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase20-official-agent-exact-binary
+          path: target
+      - run: python3 scripts/phase14-live-was.py --app ${{ matrix.app }} --duration 12 --concurrency 8 --out-dir results/phase20/live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase20-live-${{ matrix.app }}-results
+          path: results/phase20/live/
+          if-no-files-found: warn
+# Tomcat 9/10.1 requires supplied staging installs and explicit manual invocation.
+# JEUS/WebLogic/AIX are vendor-dependent manual validation targets.
+# Even a successful CI run does NOT approve production; human review required.

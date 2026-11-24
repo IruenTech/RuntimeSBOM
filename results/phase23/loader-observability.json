@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "quality": "DEGRADED",
+  "errors": [],
+  "releaseDecision": "HOLD",
+  "note": "Data consistency only; does not establish execution completeness, provenance authenticity, or release approval"
+}

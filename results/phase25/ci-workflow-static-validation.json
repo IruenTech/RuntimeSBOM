@@ -1,0 +1,28 @@
+{
+  "stage": 25,
+  "checkedAtUtc": "2026-11-24T07:26:19.341991+00:00",
+  "workflows": [
+    {
+      "path": ".github/workflows/phase24-official-asm-staging.yml",
+      "yamlValid": true,
+      "jobs": [
+        "jdk-matrix",
+        "official-build",
+        "review",
+        "was-matrix"
+      ],
+      "sha256": "3c9ae02028b22090657c1fdd244dbd6c9cee7b6df23da5d34a1f2353e6e62ad5"
+    },
+    {
+      "path": ".github/workflows/phase25-official-asm.yml",
+      "yamlValid": true,
+      "jobs": [
+        "jdk-matrix",
+        "official-build",
+        "review",
+        "was-matrix"
+      ],
+      "sha256": "71e0d656679e60f67350ec55534e3e54bbfdf2029331d241b39bdc6e6f972da3"
+    }
+  ]
+}

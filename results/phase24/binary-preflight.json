@@ -1,0 +1,13 @@
+{
+  "status": "HOLD",
+  "checkedAgent": "/mnt/data/RuntimeSBOM-Agent-Phase25/target/runtime-sbom-agent-1.0.0-rc16.jar",
+  "artifactSha256": null,
+  "checks": {
+    "shadedAsmAudit": false,
+    "buildProofPassed": false,
+    "versionMatches": false,
+    "resolvedOfficialAsm": false,
+    "exactArtifactSha256": false
+  },
+  "productionDeployment": "HOLD"
+}

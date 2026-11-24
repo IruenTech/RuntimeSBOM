@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "name": "phase21-http-same-purl-different-jar-isolated-loader",
+  "groundTruthSource": "independent HTTP accepted request count x known per-request Java call plan + fixture JAR hashes",
+  "scopeTerms": [
+    "old-fixture.jar",
+    "new-fixture.jar",
+    "pkg:maven/com.example.fixture/"
+  ],
+  "expected": [
+    {
+      "purl": "pkg:maven/com.example.fixture/fixture-core@1.2.3",
+      "sha256": "0665ebe8cb084ae3c4f58e7b05a26c568a3ad11b9d225093c938c6b85537fb9b",
+      "sourceSuffix": "old-fixture.jar",
+      "methodEntries": 40,
+      "evidenceState": "METHOD_EXECUTED"
+    },
+    {
+      "purl": "pkg:maven/com.example.fixture/fixture-core@1.2.3",
+      "sha256": "b93fb508503b0a09df5488de6840280e5e3b4949b1fbad7dc9fd1aa519f1fdaf",
+      "sourceSuffix": "new-fixture.jar",
+      "methodEntries": 80,
+      "evidenceState": "METHOD_EXECUTED"
+    },
+    {
+      "purl": "pkg:maven/com.example.fixture/fixture-core@1.2.3",
+      "sha256": "b93fb508503b0a09df5488de6840280e5e3b4949b1fbad7dc9fd1aa519f1fdaf",
+      "sourceSuffix": "new-fixture.jar",
+      "methodEntries": 0,
+      "evidenceState": "CLASS_LOADED"
+    }
+  ]
+}

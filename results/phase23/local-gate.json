@@ -1,0 +1,78 @@
+{
+  "stage": 23,
+  "version": "1.0.0-rc16",
+  "checkedAtUtc": "2026-11-24T07:23:22.910449+00:00",
+  "offlineValidation": "PASS",
+  "groups": [
+    {
+      "name": "quality-java-python-asm",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/quality-java-python-asm.log"
+    },
+    {
+      "name": "classloader-3-instances",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/classloader-3-instances.log"
+    },
+    {
+      "name": "classloader-diagnostic",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/classloader-diagnostic.log"
+    },
+    {
+      "name": "http-loading-vs-execution",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/http-loading-vs-execution.log"
+    },
+    {
+      "name": "http-loading-quality",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/http-loading-quality.log"
+    },
+    {
+      "name": "http-execution-quality",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/http-execution-quality.log"
+    },
+    {
+      "name": "collector-regression",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/collector-regression.log"
+    },
+    {
+      "name": "legacy-exact-binary-negative-tests",
+      "result": "PASS",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "results/phase23/legacy-exact-binary-negative-tests.log"
+    },
+    {
+      "name": "official-gate-expected-hold",
+      "result": "PASS",
+      "exitCode": 3,
+      "expectedExitCode": 3,
+      "log": "results/phase23/official-gate-expected-hold.log"
+    }
+  ],
+  "officialAsmBuild": "NOT_RUN_MAVEN_UNAVAILABLE_DNS_FAILURE",
+  "actualSpringBootTomcat": "NOT_RUN_PREREQUISITES_UNAVAILABLE",
+  "jdk8_11_17_21": "NOT_RUN_ONLY_JDK21_INSTALLED",
+  "jeusWeblogicAix": "NOT_RUN_VENDOR_INSTALLATIONS_UNAVAILABLE",
+  "internalAsmJdk21": "TEST_ONLY_NOT_DISTRIBUTABLE",
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD"
+}

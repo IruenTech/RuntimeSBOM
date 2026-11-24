@@ -1,0 +1,20 @@
+{
+  "stage": 25,
+  "agentVersion": "1.0.0-rc16",
+  "status": "READY_FOR_OFFICIAL_BUILD",
+  "pomChecks": {
+    "explicitOfficialAsm971": true,
+    "noOtherAsmVersions": true,
+    "compilerRelease8": true,
+    "shadingRelocation": true,
+    "premainManifest": true,
+    "noJdkInternalAsmDependency": true
+  },
+  "runtimeChecks": {
+    "mavenInstalled": false,
+    "javaInstalled": true
+  },
+  "officialMavenBuildExecuted": false,
+  "productionDeployment": "HOLD",
+  "note": "Static configuration/toolchain check, NOT an official ASM binary test"
+}

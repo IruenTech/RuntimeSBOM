@@ -1,0 +1,55 @@
+{
+  "stage": 25,
+  "version": "1.0.0-rc16",
+  "checkedAtUtc": "2026-11-24T07:23:56.947134+00:00",
+  "offlineValidation": "PASS",
+  "validationScope": "FAST_PARTIAL",
+  "groups": [
+    {
+      "name": "phase25-tests",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "status": "PASS",
+      "durationSeconds": 0.78,
+      "log": "results/phase25/phase25-tests.log"
+    },
+    {
+      "name": "preflight-config",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "status": "PASS",
+      "durationSeconds": 1.25,
+      "log": "results/phase25/preflight-config.log"
+    },
+    {
+      "name": "official-binary-expected-hold",
+      "exitCode": 3,
+      "expectedExitCode": 3,
+      "status": "PASS",
+      "durationSeconds": 0.84,
+      "log": "results/phase25/official-binary-expected-hold.log"
+    },
+    {
+      "name": "staging-expected-hold",
+      "exitCode": 3,
+      "expectedExitCode": 3,
+      "status": "PASS",
+      "durationSeconds": 0.97,
+      "log": "results/phase25/staging-expected-hold.log"
+    },
+    {
+      "name": "review-expected-hold",
+      "exitCode": 3,
+      "expectedExitCode": 3,
+      "status": "PASS",
+      "durationSeconds": 0.84,
+      "log": "results/phase25/review-expected-hold.log"
+    }
+  ],
+  "officialAsmMavenBuild": "NOT_EXECUTED_IN_THIS_ENVIRONMENT",
+  "jdk8_11_17": "NOT_EXECUTED",
+  "realSpringBootTomcat": "NOT_EXECUTED",
+  "jeusWeblogicAix": "NOT_EXECUTED",
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD"
+}

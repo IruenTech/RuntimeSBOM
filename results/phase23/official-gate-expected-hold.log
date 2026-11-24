@@ -1,0 +1,15 @@
+{
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD",
+  "baseEvidenceReview": "HOLD",
+  "observabilityChecks": {
+    "jdk8": "MISSING",
+    "jdk11": "MISSING",
+    "jdk17": "MISSING",
+    "jdk21": "MISSING",
+    "spring-boot2": "MISSING",
+    "spring-boot3": "MISSING",
+    "tomcat9": "MISSING",
+    "tomcat10": "MISSING"
+  }
+}

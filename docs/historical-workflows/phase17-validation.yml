@@ -1,0 +1,63 @@
+name: Phase17 real ASM and enterprise-classloader validation
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run actual internal ASM tests and queue race regression
+        run: python3 scripts/phase17-release-gate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase17-offline-diagnostics
+          path: |
+            results/phase17/
+            target/phase17-loader/*.log
+
+  official-asm-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8','11','17','21']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Official ASM shaded Agent build and execution
+        run: sh scripts/verify-official-asm.sh
+      - name: Real class-loader isolation using official ASM
+        run: sh scripts/phase17-loader-test.sh official
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase17-official-jdk-${{ matrix.java }}
+          path: |
+            results/phase17/loader-official.json
+            results/phase16/official-asm.json
+            target/official-asm-verification/*.log
+            target/phase17-loader/*.log
+          if-no-files-found: ignore
+
+# JEUS, WebLogic, and IBM AIX jobs require customers' licensed runtime images
+# and authorized self-hosted runners. A passing GitHub Actions matrix does not
+# claim or imply validation of those products.

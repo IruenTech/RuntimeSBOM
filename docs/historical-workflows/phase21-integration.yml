@@ -1,0 +1,121 @@
+name: Phase21 official ASM and live application evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent HTTP classloader fixture and negative controls
+        run: |
+          python3 -m unittest discover -s tests -p 'test_phase21_*.py' -v
+          python3 scripts/phase21-http-provenance.py --mode jdk-internal --requests 80 --concurrency 8
+          python3 scripts/phase21-release-gate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase21-fixture-test-only
+          path: results/phase21/
+          if-no-files-found: warn
+  official-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Official ASM 9.7.1 package and actual JVM validation
+        run: sh scripts/phase21-official-verify.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase21-official-agent-exact-binary
+          path: target/runtime-sbom-agent-1.0.0-rc12.jar
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase21-official-smoke-evidence
+          path: results/phase21/
+          if-no-files-found: warn
+  jdk-matrix:
+    needs: official-agent
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['8','11','17','21']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase21-official-agent-exact-binary
+          path: target
+      - name: Verify exact same ASM Agent JAR and actual method entries
+        run: |
+          sh scripts/phase18-verify-official-binary.sh target/runtime-sbom-agent-1.0.0-rc12.jar
+          mkdir -p results/phase21/jdk
+          cp results/phase18/jdk-evidence.json results/phase21/jdk/jdk-${{ matrix.jdk }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase21-jdk-${{ matrix.jdk }}
+          path: results/phase21/jdk/
+          if-no-files-found: warn
+  spring-boot-live:
+    needs: official-agent
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: spring-boot2
+            jdk: '8'
+          - app: spring-boot3
+            jdk: '17'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase21-official-agent-exact-binary
+          path: target
+      - name: Boot HTTP method attribution and exact embedded library hash
+        run: python3 scripts/phase21-staging-live.py --app ${{ matrix.app }} --duration 12 --concurrency 8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase21-live-${{ matrix.app }}
+          path: results/phase21/live/
+          if-no-files-found: warn
+# Real Tomcat 9 and 10.1 are intentionally NOT claimed to be tested here.
+# On an authorized staging host run phase21-staging-live.py with --app tomcat9/tomcat10
+# and --tomcat-home pointing to its real installed Tomcat distribution.
+# JEUS, WebLogic, AIX need vendor-owned staging hosts and separate evidence.

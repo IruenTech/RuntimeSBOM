@@ -1,0 +1,25 @@
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+{
+  "status": "PASS",
+  "runtime": "JDK21 internal ASM test fixture or official ASM (see test invocation)",
+  "loaderCount": 3,
+  "methodCounts": [
+    0,
+    3,
+    5
+  ],
+  "states": [
+    "CLASS_LOADED",
+    "METHOD_EXECUTED",
+    "METHOD_EXECUTED"
+  ],
+  "visibleLoaderCount": 2,
+  "isolatedLoaderCount": 1
+}

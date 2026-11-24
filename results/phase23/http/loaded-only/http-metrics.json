@@ -1,0 +1,13 @@
+{
+  "requests": 40,
+  "successfulRequests": 40,
+  "errors": 0,
+  "durationSeconds": 0.0291,
+  "successTps": 1375.3786,
+  "latencyMs": {
+    "p50": 2.2832,
+    "p95": 8.0605,
+    "p99": 10.6903
+  },
+  "purpose": "local HTTP synthetic fixture; not a production WAS performance measurement"
+}

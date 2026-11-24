@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "scope": "INDEPENDENT_SYNTHETIC_FIXTURE_GROUND_TRUTH_ONLY",
+  "fixtureName": "phase21-http-same-purl-different-jar-isolated-loader",
+  "groundTruthSource": "independent HTTP accepted request count x known per-request Java call plan + fixture JAR hashes",
+  "expectedInstances": 3,
+  "observedScopedInstances": 3,
+  "truePositives": 3,
+  "falsePositives": 0,
+  "falseNegatives": 0,
+  "identityPrecision": 1.0,
+  "identityRecall": 1.0,
+  "identityF1": 1.0,
+  "executionEvidenceExact": true,
+  "classLoaderTokensDistinct": true,
+  "unattributedMethodEntries": 0,
+  "strictFixturePass": true,
+  "groups": [
+    {
+      "purl": "pkg:maven/com.example.fixture/fixture-core@1.2.3",
+      "sha256": "0665ebe8cb084ae3c4f58e7b05a26c568a3ad11b9d225093c938c6b85537fb9b",
+      "sourceSuffix": "old-fixture.jar",
+      "expectedInstances": 1,
+      "observedInstances": 1,
+      "expectedExecution": [
+        {
+          "entries": 0,
+          "state": "CLASS_LOADED"
+        }
+      ],
+      "observedExecution": [
+        {
+          "entries": 0,
+          "state": "CLASS_LOADED"
+        }
+      ],
+      "exactExecution": true,
+      "distinctLoaderTokens": true
+    },
+    {
+      "purl": "pkg:maven/com.example.fixture/fixture-core@1.2.3",
+      "sha256": "b93fb508503b0a09df5488de6840280e5e3b4949b1fbad7dc9fd1aa519f1fdaf",
+      "sourceSuffix": "new-fixture.jar",
+      "expectedInstances": 2,
+      "observedInstances": 2,
+      "expectedExecution": [
+        {
+          "entries": 0,
+          "state": "CLASS_LOADED"
+        },
+        {
+          "entries": 0,
+          "state": "CLASS_LOADED"
+        }
+      ],
+      "observedExecution": [
+        {
+          "entries": 0,
+          "state": "CLASS_LOADED"
+        },
+        {
+          "entries": 0,
+          "state": "CLASS_LOADED"
+        }
+      ],
+      "exactExecution": true,
+      "distinctLoaderTokens": true
+    }
+  ],
+  "limitations": [
+    "Fixture-level accuracy does not estimate production OSS inventory recall or precision.",
+    "Only instrumented method entries are observable. Isolated class loaders may execute unobserved.",
+    "Ground truth must be independently constructed from known build inputs and expected calls."
+  ]
+}

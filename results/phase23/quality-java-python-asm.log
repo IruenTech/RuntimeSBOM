@@ -1,0 +1,42 @@
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+PASS observation quality 6 scenarios
+test_missing_files_hold (test_phase23_gate.GateTests.test_missing_files_hold) ... ok
+test_unapproved_base_still_hold (test_phase23_gate.GateTests.test_unapproved_base_still_hold) ... ok
+test_counter_mismatch (test_phase23_quality.QualityTests.test_counter_mismatch) ... ok
+test_duplicate_signal_rejected (test_phase23_quality.QualityTests.test_duplicate_signal_rejected) ... ok
+test_false_component_exec_state_rejected (test_phase23_quality.QualityTests.test_false_component_exec_state_rejected) ... ok
+test_isolated_loader_degraded (test_phase23_quality.QualityTests.test_isolated_loader_degraded) ... ok
+test_malformed_bom (test_phase23_quality.QualityTests.test_malformed_bom) ... ok
+test_mismatch_state (test_phase23_quality.QualityTests.test_mismatch_state) ... ok
+test_missing_signal_rejected (test_phase23_quality.QualityTests.test_missing_signal_rejected) ... ok
+test_no_hits_not_method_proof (test_phase23_quality.QualityTests.test_no_hits_not_method_proof) ... ok
+test_no_invented_execution (test_phase23_quality.QualityTests.test_no_invented_execution) ... ok
+test_observed_positive (test_phase23_quality.QualityTests.test_observed_positive) ... ok
+test_sampling (test_phase23_quality.QualityTests.test_sampling) ... ok
+test_unattributed_entries_degraded (test_phase23_quality.QualityTests.test_unattributed_entries_degraded) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.001s
+
+OK
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+PASS: official-output-shape CycloneDX JSON, 12 actual Worker.compute entries, transformFailures=0
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+OperationalSafetyTest PASS
+JDK21 internal ASM validation PASS (NOT official ASM release build)
+{
+  "status": "PASS",
+  "quality": "OBSERVED_PARTIAL",
+  "errors": [],
+  "releaseDecision": "HOLD",
+  "note": "Data consistency only; does not establish execution completeness, provenance authenticity, or release approval"
+}

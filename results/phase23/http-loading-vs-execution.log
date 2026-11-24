@@ -1,0 +1,10 @@
+PASS loaded-only TP= 3 FP= 0
+PASS asm-traced TP= 3 FP= 0
+{
+  "status": "PASS",
+  "scope": "Java builtin loopback HTTP server",
+  "distinctJarHashes": true,
+  "officialAsm": false,
+  "stagingReview": "HOLD",
+  "summary": "/mnt/data/RuntimeSBOM-Agent-Phase25/results/phase23/http/summary.json"
+}

@@ -1,0 +1,49 @@
+name: Phase 16 delivery resilience + official ASM compatibility
+on:
+  workflow_dispatch:
+jobs:
+  delivery-resilience:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Actual outage, restart, dedup, Java 8 bytecode, and JDK21 internal ASM tests
+        run: python3 scripts/phase16-release-gate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase16-delivery-evidence
+          path: results/phase16/
+  official-asm-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8','11','17','21']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Actual official ASM shaded Agent build and method execution
+        run: sh scripts/verify-official-asm.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase16-official-jdk-${{ matrix.java }}
+          path: |
+            results/phase16/official-asm.json
+            target/official-asm-verification/*.log
+            target/official-asm-verification/sbom.json
+          if-no-files-found: ignore

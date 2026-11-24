@@ -1,0 +1,72 @@
+test_java_upload (test_agent_transport.AgentTransportTest.test_java_upload) ... skipped 'run scripts/validate-offline.sh first'
+test_queue_survives_process_restart_then_delivers (test_phase16_end_to_end.CrossJvmRestartTests.test_queue_survives_process_restart_then_delivers) ... skipped 'Compile the offline transport Agent before running this test'
+test_backward_compatible_migration (test_phase16_idempotency.IdempotentCollectorTest.test_backward_compatible_migration) ... ok
+test_concurrent_idempotency (test_phase16_idempotency.IdempotentCollectorTest.test_concurrent_idempotency) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+ok
+test_retry_same_receipt_and_payload_conflict (test_phase16_idempotency.IdempotentCollectorTest.test_retry_same_receipt_and_payload_conflict) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 409
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 400
+ok
+test_bad_findings_rejected (test_phase6.Phase6Tests.test_bad_findings_rejected) ... [collector] 127.0.0.1 422
+[collector] 127.0.0.1 422
+ok
+test_changes_and_tenant_isolation (test_phase6.Phase6Tests.test_changes_and_tenant_isolation) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+ok
+test_findings_replace_and_auth (test_phase6.Phase6Tests.test_findings_replace_and_auth) ... [collector] 127.0.0.1 401
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+ok
+test_html_static_and_no_token_in_url (test_phase6.Phase6Tests.test_html_static_and_no_token_in_url) ... [collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+ok
+test_inventory_evidence_prioritization (test_phase6.Phase6Tests.test_inventory_evidence_prioritization) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+ok
+test_auth_and_tenant_asset_isolation (test_server.CollectorTests.test_auth_and_tenant_asset_isolation) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 404
+[collector] 127.0.0.1 401
+[collector] 127.0.0.1 200
+ok
+test_history_and_diff (test_server.CollectorTests.test_history_and_diff) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+ok
+test_persists_after_restart (test_server.CollectorTests.test_persists_after_restart) ... [collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+ok
+test_reject_bad_envelope_and_asset (test_server.CollectorTests.test_reject_bad_envelope_and_asset) ... [collector] 127.0.0.1 422
+[collector] 127.0.0.1 400
+ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 6.716s
+
+OK (skipped=2)

@@ -1,0 +1,3 @@
+[RuntimeSBOM] Phase23 ASM configured, methodTrace=false, output=/mnt/data/RuntimeSBOM-Agent-Phase25/results/phase23/http/loaded-only/sbom.json
+PHASE21_HTTP_READY=60597
+[RuntimeSBOM] wrote 5 provenance sources to /mnt/data/RuntimeSBOM-Agent-Phase25/results/phase23/http/loaded-only/sbom.json

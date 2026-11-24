@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "checks": {
+    "hasOfficialBuild": true,
+    "hasJdkMatrix": true,
+    "hasWasMatrix": true,
+    "hasReview": true,
+    "actualJdk8": true,
+    "springBoot2": true,
+    "springBoot3": true,
+    "tomcat9": true,
+    "tomcat10": true,
+    "doesMavenBuild": true,
+    "usesSameArtifact": true,
+    "checksBinaryBeforeRun": true,
+    "exactManifest": true,
+    "rc15": true,
+    "explicitReviewDependencies": true,
+    "noDirectProductionDeployment": true,
+    "noOldReleaseArtifact": true,
+    "runsLiveWas": true
+  }
+}

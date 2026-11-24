@@ -1,0 +1,21 @@
+test_current_workflow_passes_contract (test_phase24_ci.WorkflowTests.test_current_workflow_passes_contract) ... ok
+test_embedded_rollback_to_old_rc_is_rejected (test_phase24_ci.WorkflowTests.test_embedded_rollback_to_old_rc_is_rejected) ... ok
+test_missing_official_build_is_rejected (test_phase24_ci.WorkflowTests.test_missing_official_build_is_rejected) ... ok
+test_missing_real_was_is_rejected (test_phase24_ci.WorkflowTests.test_missing_real_was_is_rejected) ... ok
+test_production_deploy_command_rejected (test_phase24_ci.WorkflowTests.test_production_deploy_command_rejected) ... ok
+test_digest_detects_file_modification (test_phase24_staging.Phase24Manifest.test_digest_detects_file_modification) ... ok
+test_invalid_sbom_file_fails (test_phase24_staging.Phase24Manifest.test_invalid_sbom_file_fails) ... ok
+test_missing_agent_tool_version_blocks (test_phase24_staging.Phase24Manifest.test_missing_agent_tool_version_blocks) ... ok
+test_missing_files_fail_closed (test_phase24_staging.Phase24Manifest.test_missing_files_fail_closed) ... ok
+test_required_input_evidence_count (test_phase24_staging.Phase24Manifest.test_required_input_evidence_count) ... ok
+test_missing_agent_rejected (test_phase24_staging.Phase24Preflight.test_missing_agent_rejected) ... ok
+test_missing_proof_rejected (test_phase24_staging.Phase24Preflight.test_missing_proof_rejected) ... ok
+test_tampered_jar_rejected (test_phase24_staging.Phase24Preflight.test_tampered_jar_rejected) ... ok
+test_valid_proof_logic_still_production_hold (test_phase24_staging.Phase24Preflight.test_valid_proof_logic_still_production_hold) ... ok
+test_wrong_asm_rejected (test_phase24_staging.Phase24Preflight.test_wrong_asm_rejected) ... ok
+test_wrong_version_rejected (test_phase24_staging.Phase24Preflight.test_wrong_version_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.010s
+
+OK

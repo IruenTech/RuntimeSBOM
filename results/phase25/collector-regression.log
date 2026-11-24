@@ -1,0 +1,57 @@
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 409
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 400
+[collector] 127.0.0.1 422
+[collector] 127.0.0.1 422
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 401
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 404
+[collector] 127.0.0.1 401
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 201
+[collector] 127.0.0.1 200
+[collector] 127.0.0.1 422
+[collector] 127.0.0.1 400
+----------------------------------------------------------------------
+Ran 14 tests in 7.653s
+
+OK (skipped=2)

@@ -1,0 +1,89 @@
+name: Phase19 official ASM exact-binary and live Spring Boot verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-jar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: mvn -B -DskipTests clean package
+      - run: python3 scripts/phase18-audit-jar.py target/runtime-sbom-agent-1.0.0-rc12.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase19-official-jar
+          path: target/runtime-sbom-agent-1.0.0-rc12.jar
+          if-no-files-found: error
+  jdk-matrix:
+    needs: official-jar
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['8','11','17','21']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase19-official-jar
+          path: target
+      - run: sh scripts/phase18-verify-official-binary.sh
+      - run: sh scripts/phase19-provenance-test.sh official
+      - run: mkdir -p results/phase19/jdk-matrix && cp results/phase18/jdk-evidence.json results/phase19/jdk-matrix/jdk-${{ matrix.jdk }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase19-jdk-${{ matrix.jdk }}-evidence
+          path: results/phase19/jdk-matrix/
+          if-no-files-found: warn
+  spring-live:
+    needs: official-jar
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: spring-boot2
+            jdk: '8'
+          - app: spring-boot3
+            jdk: '17'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase19-official-jar
+          path: target
+      - run: python3 scripts/phase14-live-was.py --app ${{ matrix.app }} --duration 10 --concurrency 8 --out-dir results/phase19/live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase19-${{ matrix.app }}-evidence
+          path: results/phase19/live/${{ matrix.app }}/
+          if-no-files-found: warn
+# Tomcat 9 and 10.1 require supplied licensed/approved installation paths.
+# JEUS, WebLogic and AIX are not covered by this hosted CI; vendor staging is manual.
+# No hosted-CI pass means approval for production; final gate is HUMAN_REVIEW/HOLD.

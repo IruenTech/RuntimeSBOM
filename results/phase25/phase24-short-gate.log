@@ -1,0 +1,8 @@
+{
+  "stage": 24,
+  "offlineValidation": "PASS",
+  "groupsPassed": 4,
+  "groupCount": 4,
+  "stagingReview": "HOLD",
+  "productionDeployment": "HOLD"
+}
