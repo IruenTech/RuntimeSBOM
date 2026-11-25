@@ -33,6 +33,10 @@ jobs:
         run: |
           sh scripts/phase22-official-build.sh
           python3 scripts/phase24-check-binary.py
+      - name: Spring Boot 3 nested-JAR provenance regression (official ASM)
+        run: |
+          sh scripts/phase26-springboot3-metadata-test.sh
+          sh scripts/phase26-boot3-agent-smoke.sh official
       - name: Diagnose official build failure without masking it
         if: always()
         run: |

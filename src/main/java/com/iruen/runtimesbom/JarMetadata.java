@@ -15,8 +15,11 @@ final class JarMetadata {
   static JarMetadata resolve(String location){
     String external=location;
     try {
-      // Examples: jar:file:/app.jar!/BOOT-INF/lib/x.jar!/ ; file:/opt/tomcat/webapps/app/WEB-INF/lib/x.jar
-      while(external.startsWith("jar:"))external=external.substring(4);
+      // Boot 2: jar:file:/app.jar!/BOOT-INF/lib/x.jar!/
+      // Boot 3: jar:nested:/app.jar/!BOOT-INF/lib/x.jar!/
+      // Expanded WAR: file:/opt/tomcat/webapps/app/WEB-INF/lib/x.jar
+      external=normalizeArchiveLocation(location);
+      if(external==null)return fallback(location);
       int sep=external.indexOf("!/");String outer=sep>=0?external.substring(0,sep):external;
       File outerFile=new File(new URI(outer));
       if(!outerFile.isFile())return fallback(location);
@@ -40,9 +43,33 @@ final class JarMetadata {
       return fallback(location);
     }catch(Throwable ignored){return fallback(location);}
   }
+  /** Translate Spring Boot 3 nested URLs into the same physical outer-JAR + ZIP-entry
+   *  representation already understood by the Boot 2 / WAR resolver.  No dependence
+   *  on Spring Boot loader classes and no speculative Maven coordinates. */
+  private static String normalizeArchiveLocation(String location){
+    if(location==null)return null;
+    String external=location;
+    while(external.startsWith("jar:"))external=external.substring(4);
+    if(external.startsWith("nested:")){
+      String nested=external.substring("nested:".length());
+      // Boot 3 encodes the boundary as /! rather than Boot 2's !/.
+      int boundary=nested.indexOf("/!");
+      if(boundary<0)return null;
+      String outer=nested.substring(0,boundary);
+      if(!outer.startsWith("/"))return null;
+      external="file:"+outer+"!/"+nested.substring(boundary+2);
+    }
+    return external;
+  }
   static JarMetadata fallback(String source){
-    String path=source.replace('\\','/');int bang=path.lastIndexOf("!/");if(bang>=0)path=path.substring(bang+2);
-    String name=shortName(path);return new JarMetadata(null,name,null,null,"filename-only");
+    String path=source==null?"":source.replace('\\','/');
+    // Remove URL archive delimiters from the right before selecting a basename.
+    // Previously a trailing !/ caused every Boot 3 dependency to be named "unknown".
+    while(path.endsWith("!/") || path.endsWith("!"))
+      path=path.substring(0,path.length()-(path.endsWith("!/")?2:1));
+    int bang=path.lastIndexOf("!/");
+    if(bang>=0)path=path.substring(bang+2);
+    return new JarMetadata(null,shortName(path),null,null,"filename-only");
   }
   private static String shortName(String path){if(path==null||path.length()==0)return "unknown";
     int slash=path.lastIndexOf('/');String v=path.substring(slash+1);if(v.isEmpty()){int end=path.lastIndexOf('/',path.length()-2);v=path.substring(end+1).replace("/","");}

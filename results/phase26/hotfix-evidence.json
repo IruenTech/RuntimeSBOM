@@ -1,0 +1,30 @@
+{
+  "project": "RuntimeSBOM Agent rc16 Spring Boot 3 PURL hotfix",
+  "userCiEvidence": {
+    "javaVersion": "17.0.21",
+    "transformedClasses": 1,
+    "transformFailures": 0,
+    "observedHits": 65526,
+    "methodState": "METHOD_EXECUTED",
+    "nameBeforeFix": "unknown",
+    "purlBeforeFix": null,
+    "confidenceBeforeFix": "filename-only",
+    "unattributedEntries": 0
+  },
+  "localTests": {
+    "jdk": "21",
+    "agentMode": "JDK internal ASM (not official)",
+    "java8BytecodeTarget": true,
+    "metadataRegressionAssertions": 29,
+    "boot3AgentSmokePurl": "pkg:maven/com.example.fixture/fixture-core@1.2.3",
+    "boot3AgentSmokeHash": "de8959b358a6163822ca86b2515e7a9412e396b4c6920a7ecd6ddce7d29ab0ee",
+    "boot3AgentSmokeObservedMethodEntries": 7,
+    "boot3AgentSmokeEvidence": "METHOD_EXECUTED",
+    "boot2WarRegressions": "PASS",
+    "phase25UnitTests": "17 PASS",
+    "ciContract": "PASS"
+  },
+  "officialAsmBuiltInSandbox": false,
+  "ciRerunPerformed": false,
+  "productionApproval": "HOLD"
+}
