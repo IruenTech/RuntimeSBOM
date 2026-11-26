@@ -1,0 +1,41 @@
+name: Phase28 official rc16 sustained staging verification (manual, never deploy)
+on:
+  workflow_dispatch:
+    inputs:
+      phase26_run_id:
+        description: 'Successful Phase26 GitHub Actions run ID containing phase26-official-exact-binary'
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  exact-binary-local-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch prior Phase26 official immutable artifact (DO NOT rebuild)
+        uses: actions/download-artifact@v4
+        with:
+          name: phase26-official-exact-binary
+          run-id: ${{ inputs.phase26_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Validate exact official JAR and run Phase28 tests
+        run: python3 scripts/phase28-local-gate.py
+      - name: Preserve all Phase28 metrics and logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase28-exact-binary-operational-validation
+          path: results/phase28/
+          if-no-files-found: warn
+          retention-days: 30
