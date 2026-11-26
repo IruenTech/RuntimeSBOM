@@ -1,0 +1,149 @@
+name: Phase29 official rc16 WAS lifecycle and outage rehearsal (manual, never deploy)
+on:
+  workflow_dispatch:
+    inputs:
+      phase26_run_id:
+        description: 'Successful Phase26 run ID with phase26-official-exact-binary'
+        required: true
+        type: string
+      run_live_was:
+        description: 'Run actual boot/tomcat lifecycle tests on disposable GitHub runners'
+        required: true
+        default: 'yes'
+        type: choice
+        options: ['yes', 'no']
+      run_extended:
+        description: 'Run longer synthetic per-window performance probe (not production evidence)'
+        required: true
+        default: 'no'
+        type: choice
+        options: ['yes', 'no']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  local-official-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch EXACT previously validated Phase26 Agent JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: phase26-official-exact-binary
+          run-id: ${{ inputs.phase26_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Localhost official JVM and Collector 4-group verification
+        run: python3 scripts/phase29-local-gate.py --quick
+      - name: Optional longer synthetic windowed measurement
+        if: ${{ inputs.run_extended == 'yes' }}
+        run: python3 scripts/phase29-sustained.py --warmup 10 --window-seconds 60 --windows 5 --concurrency 8
+      - name: Preserve Phase29 JSON and raw traces even on failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase29-official-local-rehearsal
+          path: results/phase29/
+          if-no-files-found: warn
+          retention-days: 30
+  live-was-lifecycle:
+    if: ${{ inputs.run_live_was == 'yes' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: spring-boot2
+            java: '8'
+            tomcat_version: ''
+          - app: spring-boot3
+            java: '17'
+            tomcat_version: ''
+          - app: tomcat9
+            java: '11'
+            tomcat_version: '9.0.107'
+          - app: tomcat10
+            java: '17'
+            tomcat_version: '10.1.43'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch EXACT Phase26 official Agent (no rebuilding)
+        uses: actions/download-artifact@v4
+        with:
+          name: phase26-official-exact-binary
+          run-id: ${{ inputs.phase26_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Install disposable Tomcat into RUNNER_TEMP with SHA-512 verified archive
+        if: ${{ matrix.tomcat_version != '' }}
+        env:
+          TOMCAT_VERSION: ${{ matrix.tomcat_version }}
+        run: sh scripts/phase22-install-tomcat.sh "$TOMCAT_VERSION" "$RUNNER_TEMP/phase29-tomcat"
+      - name: Two Spring Boot JVM starts or Tomcat WAR undeploy/redeploy
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          python3 scripts/phase29-was-lifecycle.py \
+            --app "$APP" \
+            --tomcat-home "$RUNNER_TEMP/phase29-tomcat" \
+            --requests 40
+      - name: Upload real WAS lifecycle evidence even if the assertion fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase29-real-was-${{ matrix.app }}
+          path: results/phase29/live/${{ matrix.app }}/
+          if-no-files-found: warn
+          retention-days: 30
+  human-review-gate:
+    if: ${{ always() && inputs.run_live_was == 'yes' }}
+    needs: [local-official-rehearsal, live-was-lifecycle]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download the exact local gate evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: phase29-official-local-rehearsal
+          path: results/phase29/local-ci/
+        continue-on-error: true
+      - name: Download all four actual WAS lifecycle artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: phase29-real-was-*
+          path: results/phase29/staged/
+        continue-on-error: true
+      - name: Fail-closed cross-WAS provenance and lifecycle review
+        run: |
+          python3 scripts/phase29-review-gate.py \
+            --local-gate results/phase29/local-ci/local-gate.json \
+            --live-dir results/phase29/staged \
+            --out results/phase29/review.json
+      - name: Always upload review decision including HOLD reason
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase29-staging-review-report
+          path: results/phase29/review.json
+          if-no-files-found: warn
