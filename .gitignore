@@ -1,0 +1,9 @@
+# Transient local compilation and Python caches; keep source and CI configuration.
+**/target/
+**/__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+# CI evidence is uploaded via GitHub artifacts; local scratch outputs are not committed.
+results/phase26/local/
+results/phase26/*-unit.log

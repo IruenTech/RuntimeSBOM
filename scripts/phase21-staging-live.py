@@ -60,6 +60,15 @@ def process(args):
                         text=True,timeout=900)
     (dest/'phase21-live-command.log').write_text(live.stdout)
     if live.returncode:
+        diagnostic=load_script('phase26-ci-diagnostics.py','phase26diag')
+        logs=[dest/'build.log',dest/'asm-traced/server.log',dest/'phase21-live-command.log']
+        sbom=dest/'asm-traced/sbom.json'
+        report=diagnostic.write_report(logs,sbom if sbom.is_file() else None,
+                                       dest/'phase26-staging-failure.json')
+        codes=[d['code'] for r in report['logs'] for d in r.get('codes',[])]
+        if report['sbomEvidence']:codes.extend(report['sbomEvidence'].get('codes',[]))
+        print('PHASE26_LIVE_FAILURE_DIAGNOSIS:',json.dumps({'codes':sorted(set(codes)),
+            'diagnosticFile':str(dest/'phase26-staging-failure.json')},ensure_ascii=False),flush=True)
         raise RuntimeError('Live test failed: '+live.stdout[-3000:])
     phase14=json.loads((dest/'summary.json').read_text())
     if phase14.get('officialJarSha256')!=sha(AGENT):

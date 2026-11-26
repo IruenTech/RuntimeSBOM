@@ -1,3 +1,28 @@
+# RuntimeSBOM Agent — Phase 26 (rc16 CI hardening)
+
+**Project state:** The user reports that the previous Spring Boot 3 GitHub Actions hotfix succeeded. This package carries forward that fix and adds independently diagnosable Spring Boot 2 Maven builds and CI evidence handling. The GitHub run has **not** been executed from this container; no fresh official shaded Agent binary is bundled.
+
+**New Phase26 deliverables**
+
+- `scripts/phase26-ci-diagnostics.py`: captures real Maven errors (dependencies, Java release, compilation, packaging) and separates `MISSING_PURL` from `MISSING_METHOD_EXECUTION`. It never declares unexecuted builds successful.
+- `scripts/phase14-live-was.py` and `scripts/phase21-staging-live.py`: preserve and display actionable build/execution failure diagnoses instead of only a generic Python traceback.
+- `.github/workflows/phase26-staging.yml`: the official ASM JAR is built once and used across the JDK/WAS matrix. A new independent JDK 8 Spring Boot 2 compile job publishes logs even when the main matrix fails. `review` remains fail-closed and never deploys.
+- `.github/workflows/phase25-official-asm.yml`: previous workflow is now manual-only to prevent duplicate workflows on a push.
+- `tests/test_phase26_diagnostics.py` and `scripts/phase26-local-gate.py`: new regression tests and a truthful local test report.
+- Detailed directions: `docs/PHASE26-BUILD-AND-CI-DIAGNOSTICS.md`.
+
+**Actual local verification (2026-11-26):** 18/18 new unit tests, Spring Boot 3 nested URL 29 assertions, ASM JDK21 test-only smoke, real nested-JAR fixture method entries, Phase25 short regression and Collector tests (12 passing, 2 skipped). Five Phase26 local validation groups passed. Official ASM/GitHub and Java8/11/17 real builds were **not executed locally**, and Spring Boot 2's earlier Maven failure cause is **unknown without its actual `build.log`**.
+
+```bash
+python3 scripts/phase26-local-gate.py
+```
+
+To run official validation, push to `main` and select **Phase26 official ASM exact-binary WAS diagnostics (never auto-deploy)** in GitHub Actions (or check the automatically triggered run). If Spring Boot 2 fails, download `phase26-boot2-isolated-build-log` and inspect `diagnostics.json`/`build.log`. The official release approval remains a human decision after complete evidence.
+
+---
+
+## Historical Phase25 README (retained for context)
+
 # RuntimeSBOM Agent — Phase 25 (v1.0.0-rc16)
 
 Java 8 API-compatible Java Instrumentation agent, ASM method-entry tracking, class loader/JAR provenance, CycloneDX 1.6, durable SBOM upload queue, SQLite Collector, and dashboard. Phase 25 focuses on **official release build troubleshooting and reproducible CI evidence**, not unsupported claims of a production-ready release.

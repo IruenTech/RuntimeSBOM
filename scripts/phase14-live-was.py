@@ -204,7 +204,13 @@ def run_mode(args, archive, workdir, port, mode):
         if mode=='loaded-only' and evidence['methodExecuted']:
             raise RuntimeError('Loading-only mode must not claim executed methods')
         if mode=='asm-traced' and not (evidence['purlFound'] and evidence['methodExecuted']):
-            raise RuntimeError('Missing exact commons-lang3 Maven PURL / actual METHOD_EXECUTED evidence')
+            import importlib.util
+            spec=importlib.util.spec_from_file_location('phase26evidence',str(ROOT/'scripts/phase26-ci-diagnostics.py'))
+            diagnostic=importlib.util.module_from_spec(spec);spec.loader.exec_module(diagnostic)
+            cause=diagnostic.evidence_diagnostic(json.loads(sbom.read_text()))
+            (out/'phase26-evidence-diagnostic.json').write_text(json.dumps(cause,indent=2)+'\n')
+            raise RuntimeError('%s: commons-lang3 PURL/evidence requirement not met; %s' %
+                               (','.join(cause['codes']) or 'UNCLASSIFIED',out/'phase26-evidence-diagnostic.json'))
     return {'http':http,'process':metrics,'evidence':evidence}
 
 
@@ -229,7 +235,19 @@ def main():
     basedir=ROOT/APPS[a.app][0]
     build=subprocess.run(['mvn','-B','-DskipTests','clean','package'],cwd=basedir,capture_output=True,text=True,timeout=240)
     (workdir/'build.log').write_text(build.stdout+'\n'+build.stderr)
-    if build.returncode:raise RuntimeError('%s Maven build failed; %s'%(a.app,(workdir/'build.log')))
+    if build.returncode:
+        # Prior CI only displayed a Python RuntimeError and hid the Maven root cause
+        # in a downloadable artifact. Make the relevant Maven errors visible in CI.
+        import importlib.util
+        spec=importlib.util.spec_from_file_location('phase26diag',str(ROOT/'scripts/phase26-ci-diagnostics.py'))
+        diag=importlib.util.module_from_spec(spec);spec.loader.exec_module(diag)
+        result=diag.inspect_file(workdir/'build.log')
+        (workdir/'phase26-build-diagnostic.json').write_text(json.dumps(result,indent=2)+'\n')
+        print('PHASE26_MAVEN_BUILD_DIAGNOSTIC:',json.dumps(result,ensure_ascii=False),flush=True)
+        if result['mavenErrorExcerpts']:
+            print('Maven errors (first 18):\n'+'\n'.join(result['mavenErrorExcerpts']),flush=True)
+        raise RuntimeError('%s Maven build failed (diagnostic=%s); log=%s' %
+                           (a.app,','.join(v['code'] for v in result['codes']) or 'UNCLASSIFIED',workdir/'build.log'))
     archive=basedir/APPS[a.app][1]
     if not archive.is_file():raise RuntimeError('Missing compiled app: '+str(archive))
     output={}
