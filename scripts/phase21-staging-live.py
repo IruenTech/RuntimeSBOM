@@ -55,6 +55,7 @@ def process(args):
     cmd=[sys.executable,str(ROOT/'scripts/phase14-live-was.py'),'--app',args.app,
          '--duration',str(args.duration),'--concurrency',str(args.concurrency),
          '--out-dir',str(ROOT/args.out_dir)]
+    if args.warmup: cmd+=['--warmup',str(args.warmup)]
     if args.tomcat_home:cmd+=['--tomcat-home',args.tomcat_home]
     live=subprocess.run(cmd,cwd=ROOT,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                         text=True,timeout=900)
@@ -98,9 +99,10 @@ def main():
     parser.add_argument('--tomcat-home',default='')
     parser.add_argument('--out-dir',type=Path,default=Path('results/phase21/live'))
     parser.add_argument('--duration',type=float,default=15)
+    parser.add_argument('--warmup',type=float,default=0,help='Per JVM HTTP warmup before measuring SLO')
     parser.add_argument('--concurrency',type=int,default=8)
     args=parser.parse_args()
-    if not .5<=args.duration<=300 or not 1<=args.concurrency<=32:
+    if not .5<=args.duration<=300 or not 0<=args.warmup<=120 or not 1<=args.concurrency<=32:
         parser.error('invalid bounded test duration/concurrency')
     return process(args)
 

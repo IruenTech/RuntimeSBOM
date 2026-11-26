@@ -168,9 +168,9 @@ jobs:
       - name: Actual HTTP + exact JAR byte SHA + method-entry evidence
         run: |
           if [ "${{ matrix.app }}" = tomcat9 ] || [ "${{ matrix.app }}" = tomcat10 ]; then
-            python3 scripts/phase21-staging-live.py --app '${{ matrix.app }}' --tomcat-home "$RUNNER_TEMP/tomcat" --out-dir results/phase22/live --duration 12 --concurrency 8
+            python3 scripts/phase21-staging-live.py --app '${{ matrix.app }}' --tomcat-home "$RUNNER_TEMP/tomcat" --out-dir results/phase22/live --duration 30 --warmup 5 --concurrency 8
           else
-            python3 scripts/phase21-staging-live.py --app '${{ matrix.app }}' --out-dir results/phase22/live --duration 12 --concurrency 8
+            python3 scripts/phase21-staging-live.py --app '${{ matrix.app }}' --out-dir results/phase22/live --duration 30 --warmup 5 --concurrency 8
           fi
       - name: Emit Maven/WAS root-cause diagnostic even if integration failed
         if: always()
@@ -180,6 +180,13 @@ jobs:
             --log "results/phase22/live/${{ matrix.app }}/phase21-live-command.log" \
             --log "results/phase22/live/${{ matrix.app }}/asm-traced/server.log" \
             --out "results/phase22/live/${{ matrix.app }}/phase26-diagnostic.json"
+      - name: Explain exact WAS evidence and SLO failures
+        if: always()
+        shell: bash
+        run: |
+          python3 scripts/phase28-was-review-diagnostics.py \
+            --app '${{ matrix.app }}' \
+            --out 'results/phase22/live/${{ matrix.app }}/phase28-diagnostic.json'
       - name: Preserve WAS directory when uploading per-matrix evidence
         if: always()
         run: |
@@ -220,6 +227,9 @@ jobs:
           pattern: phase26-was-*
           path: results/phase22/live
           merge-multiple: true
+      - name: Show per-WAS metrics and exact review blockers without changing gate
+        if: always()
+        run: python3 scripts/phase28-was-review-diagnostics.py
       - name: Fail closed on missing/mismatched binary, JDK/WAS, or SBOM quality evidence
         run: python3 scripts/phase24-staging-manifest.py
       - name: Require official build and all test jobs to have passed
@@ -241,4 +251,5 @@ jobs:
           path: |
             results/phase24/staging-manifest.json
             results/phase25/release-review.json
+            results/phase28/was-review-diagnostics.json
           if-no-files-found: warn

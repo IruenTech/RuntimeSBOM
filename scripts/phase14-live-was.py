@@ -180,6 +180,15 @@ def run_mode(args, archive, workdir, port, mode):
         watch.start()
         try:
             until_ready(url,child)
+            # Warm up each fresh JVM under the same HTTP workload before measuring.
+            # Exclude warmup requests from the SLO measurement; retain raw evidence.
+            if args.warmup > 0:
+                warm=subprocess.run([sys.executable,str(ROOT/'scripts/http-load.py'),
+                    '--url',url,'--duration',str(args.warmup), '--concurrency',str(args.concurrency),
+                    '--expect','mobs-emitnur','--out',str(out/'warmup.json')],
+                    capture_output=True,text=True,timeout=args.warmup+45)
+                if warm.returncode:
+                    raise RuntimeError('warmup failed: '+(warm.stderr+warm.stdout)[-1200:])
             report=out/'http.json'
             p=subprocess.run([sys.executable,str(ROOT/'scripts/http-load.py'),'--url',url,'--duration',str(args.duration),
                  '--concurrency',str(args.concurrency),'--expect','mobs-emitnur','--out',str(report)],
@@ -218,11 +227,13 @@ def main():
     p=argparse.ArgumentParser()
     p.add_argument('--app',choices=APPS,required=True)
     p.add_argument('--duration',type=float,default=3)
+    p.add_argument('--warmup',type=float,default=0,help='Per-mode JVM warmup seconds, excluded from SLO measurement')
     p.add_argument('--concurrency',type=int,default=4)
     p.add_argument('--tomcat-home',default=os.environ.get('CATALINA_HOME',''))
     p.add_argument('--out-dir',default='results/phase14/live')
     a=p.parse_args()
-    if a.duration<0.5 or a.duration>3600 or a.concurrency<1 or a.concurrency>64:p.error('duration/concurrency outside bounded test limits')
+    if a.duration<0.5 or a.duration>3600 or a.warmup<0 or a.warmup>120 or a.concurrency<1 or a.concurrency>64:
+        p.error('duration/warmup/concurrency outside bounded test limits')
     required=APPS[a.app][2]
     if jdk_major()<required:p.error('%s requires Java %d+'%(a.app,required))
     if not AGENT.is_file():p.error('Official shaded agent missing; run mvn clean package first')
