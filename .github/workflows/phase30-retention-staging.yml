@@ -1,0 +1,135 @@
+name: Phase30 exact ASM Tomcat classloader GC and Metaspace staging (manual, no deploy)
+on:
+  workflow_dispatch:
+    inputs:
+      phase26_run_id:
+        description: 'Successful Phase26 run that built the EXACT binary used by Phase29'
+        required: true
+        type: string
+      phase29_run_id:
+        description: 'Successful Phase29 run containing phase29-staging-review-report'
+        required: true
+        type: string
+      redeploy_cycles:
+        description: 'Tomcat redeploys per runtime; minimum 6 for review'
+        required: true
+        default: '6'
+        type: choice
+        options: ['6', '12']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  tomcat-memory:
+    strategy:
+      fail-fast: false
+      max-parallel: 1  # limit simultaneous Maven Central calls (HTTP 429 prevention)
+      matrix:
+        include:
+          - app: tomcat9
+            java: '11'
+            tomcat_version: '9.0.107'
+          - app: tomcat10
+            java: '17'
+            tomcat_version: '10.1.43'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch Phase26 official Agent and build audit
+        uses: actions/download-artifact@v4
+        with:
+          name: phase26-official-exact-binary
+          run-id: ${{ inputs.phase26_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Bind actual JAR checksum to Phase26 build audit
+        run: python3 scripts/phase29-bind-agent-proof.py --github-env "$GITHUB_ENV"
+      - name: Fetch Phase29 review for exact-binary preflight
+        uses: actions/download-artifact@v4
+        with:
+          name: phase29-staging-review-report
+          run-id: ${{ inputs.phase29_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/phase30/phase29-preflight/
+      - name: Reject stale Phase26 run IDs before live WAR redeploy
+        run: |
+          python3 -c 'import json,os; p=json.load(open("results/phase30/phase29-preflight/review.json")); assert p.get("stagingReview")=="ELIGIBLE_FOR_HUMAN_REVIEW" and p.get("agentSha256")==os.environ["RUNTIMESBOM_EXPECTED_SHA256"], "Phase26 binary SHA is NOT the same JAR approved in Phase29"'
+      - name: Install isolated Tomcat (SHA-512 checked)
+        env:
+          TOMCAT_VERSION: ${{ matrix.tomcat_version }}
+        run: sh scripts/phase22-install-tomcat.sh "$TOMCAT_VERSION" "$RUNNER_TEMP/phase30-tomcat"
+      - name: Actual WAR redeploy plus forced GC and native-memory snapshots
+        env:
+          APP: ${{ matrix.app }}
+          CYCLES: ${{ inputs.redeploy_cycles }}
+        run: |
+          python3 scripts/phase30-tomcat-retention.py \
+            --app "$APP" \
+            --tomcat-home "$RUNNER_TEMP/phase30-tomcat" \
+            --cycles "$CYCLES" \
+            --requests 40
+      - name: Preserve lifecycle histograms and JVM logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase30-${{ matrix.app }}-retention
+          path: results/phase30/tomcat/${{ matrix.app }}/
+          if-no-files-found: warn
+          retention-days: 30
+  review:
+    if: always()
+    needs: [tomcat-memory]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch Phase26 official Agent to identify verified binary
+        uses: actions/download-artifact@v4
+        with:
+          name: phase26-official-exact-binary
+          run-id: ${{ inputs.phase26_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Verify original binary hash and audit
+        run: python3 scripts/phase29-bind-agent-proof.py --github-env "$GITHUB_ENV"
+      - name: Retrieve Phase29 prior human-review eligibility evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: phase29-staging-review-report
+          run-id: ${{ inputs.phase29_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/phase30/phase29-review/
+      - name: Retrieve both memory probe reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: phase30-tomcat*-retention
+          path: results/phase30/staged/
+        continue-on-error: true
+      - name: Fail-closed review without production approval
+        env:
+          MIN_CYCLES: ${{ inputs.redeploy_cycles }}
+        run: |
+          python3 scripts/phase30-review-gate.py \
+            --phase29-review results/phase30/phase29-review/review.json \
+            --tomcat-dir results/phase30/staged \
+            --min-cycles "$MIN_CYCLES" \
+            --out results/phase30/review.json
+      - name: Upload review (including HOLD) even when a gate failed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase30-classloader-review
+          path: results/phase30/review.json
+          if-no-files-found: warn
