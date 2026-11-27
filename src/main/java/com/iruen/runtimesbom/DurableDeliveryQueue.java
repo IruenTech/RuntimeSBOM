@@ -66,8 +66,16 @@ final class DurableDeliveryQueue {
   synchronized int pendingFiles() { try { return entries().size(); } catch (IOException ex) { return -1; } }
 
   synchronized long pendingBytes() {
-    try { long sum = 0; for (Path p : entries()) sum += Files.size(p); return sum; }
-    catch (IOException ex) { return -1; }
+    try {
+      long sum = 0;
+      for (Path p : entries()) {
+        try { sum += Files.size(p); }
+        catch (NoSuchFileException alreadyDrained) {
+          // Concurrent delivery may remove an entry between list and stat.
+        }
+      }
+      return sum;
+    } catch (IOException ex) { return -1; }
   }
 
   /** Enqueue file with atomic rename; never overwrite an existing snapshot. */
@@ -78,8 +86,19 @@ final class DurableDeliveryQueue {
       if (!source.isFile() || source.length() < 2 || source.length() > MAX_SNAPSHOT_BYTES)
         throw new IOException("SBOM missing or oversized");
       List<Path> current = entries();
-      long total = 0; for (Path p : current) total += Files.size(p);
-      if (current.size() >= maxFiles || total + source.length() > maxBytes) {
+      long total = 0;
+      int stillPending = 0;
+      for (Path p : current) {
+        try {
+          total += Files.size(p);
+          stillPending++;
+        } catch (NoSuchFileException alreadyDrained) {
+          // A concurrent periodic drain completed this file between listing
+          // and stat.  This is successful delivery, not an enqueue failure.
+          // Never drop the new snapshot because an older one disappeared.
+        }
+      }
+      if (stillPending >= maxFiles || total + source.length() > maxBytes) {
         enqueueRejected.incrementAndGet();
         System.err.println("[RuntimeSBOM] queue capacity exhausted; local output remains: " + source.getName());
         return false;

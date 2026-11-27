@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 JAR=ROOT/'target/runtime-sbom-agent-1.0.0-rc16.jar'
-SHA='ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a'
+SHA=os.environ.get('RUNTIMESBOM_EXPECTED_SHA256', 'ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a')
 spec=importlib.util.spec_from_file_location('phase14',ROOT/'scripts/phase14-live-was.py')
 phase14=importlib.util.module_from_spec(spec);spec.loader.exec_module(phase14)
 PURL='pkg:maven/org.apache.commons/commons-lang3@3.14.0'

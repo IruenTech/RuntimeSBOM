@@ -39,6 +39,20 @@ def main():
         except Exception as e:check={'name':name,'status':'FAIL','error':repr(e)}
         report['checks'].append(check)
         print(check['status'],name,flush=True)
+        if check['status'] == 'FAIL':
+            print('PHASE29_CHECK_FAILURE: '+name, file=sys.stderr, flush=True)
+            print(check.get('outputTail', check.get('error', 'no diagnostic available')), file=sys.stderr, flush=True)
+            if name == 'phase29_outage_backlog_replay':
+                outage_path = ROOT/'results/phase29/outage-replay.json'
+                if outage_path.is_file():
+                    print('PHASE29_OUTAGE_REPORT: '+str(outage_path), file=sys.stderr, flush=True)
+                    try:
+                        details = json.loads(outage_path.read_text(encoding='utf-8'))
+                        print('PHASE29_OUTAGE_FAILURE_DETAILS: '+json.dumps({
+                            k:details.get(k) for k in ('failureStage','error','queueFilesAtFailure','pendingWhileOffline')},
+                            ensure_ascii=False), file=sys.stderr, flush=True)
+                    except (ValueError,OSError) as ex:
+                        print('PHASE29_OUTAGE_REPORT_READ_ERROR: '+repr(ex), file=sys.stderr, flush=True)
     report['status']='PASS' if all(c['status']=='PASS' for c in report['checks']) else 'FAIL'
     a.out.parent.mkdir(parents=True,exist_ok=True)
     a.out.write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')

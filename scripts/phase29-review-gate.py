@@ -2,9 +2,10 @@
 """Fail-closed cross-job staging report gate; never authorizes production deployment."""
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
-SHA='ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a'
+SHA=os.environ.get('RUNTIMESBOM_EXPECTED_SHA256', 'ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a')
 APPS=('spring-boot2','spring-boot3','tomcat9','tomcat10')
 
 

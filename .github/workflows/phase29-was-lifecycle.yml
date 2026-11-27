@@ -41,6 +41,8 @@ jobs:
           run-id: ${{ inputs.phase26_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: .
+      - name: Bind SHA-256 to downloaded successful Phase26 Maven build and structural audit
+        run: python3 scripts/phase29-bind-agent-proof.py --github-env "$GITHUB_ENV"
       - name: Localhost official JVM and Collector 4-group verification
         run: python3 scripts/phase29-local-gate.py --quick
       - name: Optional longer synthetic windowed measurement
@@ -91,6 +93,8 @@ jobs:
           run-id: ${{ inputs.phase26_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: .
+      - name: Bind SHA-256 to downloaded successful Phase26 Maven build and structural audit
+        run: python3 scripts/phase29-bind-agent-proof.py --github-env "$GITHUB_ENV"
       - name: Install disposable Tomcat into RUNNER_TEMP with SHA-512 verified archive
         if: ${{ matrix.tomcat_version != '' }}
         env:
@@ -122,6 +126,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Fetch official Phase26 build and audit used by the local/WAS jobs
+        uses: actions/download-artifact@v4
+        with:
+          name: phase26-official-exact-binary
+          run-id: ${{ inputs.phase26_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Bind Phase26 SHA-256 for exact cross-WAS review
+        run: python3 scripts/phase29-bind-agent-proof.py --github-env "$GITHUB_ENV"
       - name: Download the exact local gate evidence
         uses: actions/download-artifact@v4
         with:

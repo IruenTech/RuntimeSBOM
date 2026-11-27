@@ -19,16 +19,22 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JAR = ROOT / 'target/runtime-sbom-agent-1.0.0-rc16.jar'
-SHA = 'ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a'
+SHA = os.environ.get('RUNTIMESBOM_EXPECTED_SHA256', 'ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a')
 TOKEN = 'phase29-local-ephemeral-token-for-testing'
 sys.path.insert(0, str(ROOT / 'collector'))
 from server import Server, Handler
 
 
-def port():
-    with socket.socket() as s:
-        s.bind(('127.0.0.1', 0))
-        return s.getsockname()[1]
+def reserve_offline_port():
+    """Keep the selected port reserved while Collector is intentionally offline.
+
+    A closed ephemeral probe port can be acquired by another process on shared
+    CI runners.  A bound, non-listening socket keeps connections refused and
+    prevents another server from taking that address during the outage phase.
+    """
+    hold = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    hold.bind(('127.0.0.1', 0))
+    return hold
 
 
 def sha(path):
@@ -102,61 +108,98 @@ def main():
     report={'phase':29,'test':'multi_jvm_outage_restart_replay','agentSha256':SHA,
             'productionDeployment':'HOLD','scope':'JDK21 localhost reference collector, not live WAS',
             'status':'FAIL','offlineJvmCount':args.offline_jvms,'outageSeconds':args.outage_seconds}
+    stage = 'compile_demo'
+    held_socket = None
     try:
-        classes=compile_demo()
+        classes = compile_demo()
+        stage = 'prepare_outage'
         with tempfile.TemporaryDirectory(prefix='phase29-outage-') as tmp:
-            base=Path(tmp);queue=base/'queue';db=base/'collector';port_number=port()
-            url='http://127.0.0.1:%d/api/v1/sbom'%port_number
-            original=[]
-            for i in range(args.offline_jvms):
-                original.append(invoke_agent(classes,queue,url,base,i+1))
-                pending=sorted(queue.glob('*.json'))
-                if len(pending)!=i+1:
-                    raise RuntimeError('Backlog mismatch after JVM %d: got %d'%(i+1,len(pending)))
-            replay_file=sorted(queue.glob('*.json'))[0]
-            replay_payload=replay_file.read_bytes()
-            replay_id=replay_file.name.split('-')[1]
-            report['pendingWhileOffline']=len(list(queue.glob('*.json')))
-            time.sleep(args.outage_seconds)
-            server, worker = start_server(port_number,db)
+            base = Path(tmp)
+            queue = base/'queue'
+            db = base/'collector'
+            held_socket = reserve_offline_port()
+            port_number = held_socket.getsockname()[1]
+            url = 'http://127.0.0.1:%d/api/v1/sbom' % port_number
+            original = []
             try:
-                online_asset=invoke_agent(classes,queue,url,base,args.offline_jvms+1)
-                pending_after=list(queue.glob('*.json'))
-                if pending_after:
-                    raise RuntimeError('Recovery left pending files: %d'%len(pending_after))
-                assets=get_assets(port_number)
-                expected={a:1 for a in original+[online_asset]}
-                if assets!=expected:
-                    raise RuntimeError('Collector missing snapshots: %s expected %s'%(assets,expected))
-                report['assetsAfterRecovery']=assets
-                report['queueFilesAfterRecovery']=0
+                for i in range(args.offline_jvms):
+                    stage = 'offline_jvm_%d' % (i+1)
+                    original.append(invoke_agent(classes,queue,url,base,i+1))
+                    pending = sorted(queue.glob('*.json'))
+                    if len(pending) != i+1:
+                        raise RuntimeError('Backlog mismatch after JVM %d: got %d expected %d' % (i+1,len(pending),i+1))
+                stage = 'capture_replay_payload'
+                replay_file = sorted(queue.glob('*.json'))[0]
+                replay_payload = replay_file.read_bytes()
+                replay_id = replay_file.name.split('-')[1]
+                report['pendingWhileOffline'] = len(list(queue.glob('*.json')))
+                time.sleep(args.outage_seconds)
+
+                # Release as late as possible, after all offline JVMs have exited.
+                # No Agent runs between release and the reference Collector bind.
+                stage = 'start_collector'
+                held_socket.close()
+                held_socket = None
+                server, worker = start_server(port_number,db)
+                try:
+                    stage = 'online_jvm_drain'
+                    online_asset = invoke_agent(classes,queue,url,base,args.offline_jvms+1)
+                    stage = 'verify_drained_queue'
+                    pending_after = list(queue.glob('*.json'))
+                    if pending_after:
+                        raise RuntimeError('Recovery left pending files: %d' % len(pending_after))
+                    stage = 'verify_collector_snapshots'
+                    assets = get_assets(port_number)
+                    expected = {a:1 for a in original+[online_asset]}
+                    if assets != expected:
+                        raise RuntimeError('Collector missing snapshots: %s expected %s' % (assets,expected))
+                    report['assetsAfterRecovery'] = assets
+                    report['queueFilesAfterRecovery'] = 0
+                finally:
+                    close_server(server, worker)
+
+                stage = 'restart_collector'
+                server2, worker2 = start_server(port_number,db)
+                try:
+                    stage = 'verify_idempotent_replay'
+                    req = urllib.request.Request(url,data=replay_payload,method='POST',headers={
+                        'Authorization':'Bearer '+TOKEN,
+                        'Content-Type':'application/vnd.cyclonedx+json; version=1.6',
+                        'X-RuntimeSBOM-Asset': original[0],
+                        'X-RuntimeSBOM-Delivery-ID': replay_id})
+                    with urllib.request.urlopen(req,timeout=5) as resp:
+                        report['replayHttpStatus'] = resp.status
+                    after_restart = get_assets(port_number)
+                    if after_restart != expected:
+                        raise RuntimeError('Duplicate replay changed persisted snapshots: %s' % after_restart)
+                    report['assetsAfterCollectorRestart'] = after_restart
+                    report['expectedSnapshots'] = len(expected)
+                    report['status'] = 'PASS'
+                finally:
+                    close_server(server2,worker2)
+            except Exception:
+                report['failureStage'] = stage
+                report['queueFilesAtFailure'] = len(list(queue.glob('*.json')))
+                # The temp directory is removed on exit, so retain bounded,
+                # secret-free Agent stderr/stdout tails in the JSON artifact.
+                report['agentLogTails'] = [
+                    {'file': f.name, 'tail': f.read_text(encoding='utf-8',errors='replace')[-2500:]}
+                    for f in sorted(base.glob('agent-*.log'))
+                ]
+                raise
             finally:
-                close_server(server, worker)
-            # Persistent idempotency across an actual reference collector stop/start.
-            server2, worker2 = start_server(port_number,db)
-            try:
-                req=urllib.request.Request(url,data=replay_payload,method='POST',headers={
-                    'Authorization':'Bearer '+TOKEN,
-                    'Content-Type':'application/vnd.cyclonedx+json; version=1.6',
-                    'X-RuntimeSBOM-Asset': original[0],
-                    'X-RuntimeSBOM-Delivery-ID': replay_id})
-                with urllib.request.urlopen(req,timeout=5) as resp:
-                    report['replayHttpStatus']=resp.status
-                after_restart=get_assets(port_number)
-                if after_restart!=expected:
-                    raise RuntimeError('Duplicate replay changed persisted snapshots: %s'%after_restart)
-                report['assetsAfterCollectorRestart']=after_restart
-                report['expectedSnapshots']=len(expected)
-                report['status']='PASS'
-            finally:
-                close_server(server2,worker2)
+                if held_socket is not None:
+                    held_socket.close()
     except Exception as exc:
-        report['error']=repr(exc)
+        report['error'] = repr(exc)
+        report.setdefault('failureStage',stage)
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('PHASE29 OUTAGE',report['status'],'PRODUCTION HOLD',flush=True)
     if report['status']!='PASS':
-        print(report['error'],file=sys.stderr)
+        print('PHASE29_OUTAGE_FAILURE_STAGE:',report['failureStage'],file=sys.stderr,flush=True)
+        print('PHASE29_OUTAGE_ERROR:',report['error'],file=sys.stderr,flush=True)
+        print('PHASE29_OUTAGE_REPORT:',args.out,file=sys.stderr,flush=True)
         return 1
     return 0
 

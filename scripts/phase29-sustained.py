@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 AGENT=ROOT/'target/runtime-sbom-agent-1.0.0-rc16.jar'
-SHA='ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a'
+SHA=os.environ.get('RUNTIMESBOM_EXPECTED_SHA256', 'ed5613c7d515d877b57bb6844ddb4bb66c919af74648ac10bb9960d99e406f4a')
 MODES=('baseline','loaded-only','asm-traced')
 spec=importlib.util.spec_from_file_location('phase28performance', ROOT/'scripts/phase28-performance.py')
 perf=importlib.util.module_from_spec(spec)
