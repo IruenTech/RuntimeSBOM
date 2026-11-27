@@ -19,7 +19,14 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 APP_CHOICES=('tomcat9','tomcat10')
 ROW=re.compile(r'^\s*\d+:\s+(\d+)\s+(\d+)\s+(\S+)',re.M)
-META=re.compile(r'[-+]\s*Metaspace\s*\([^)]*?committed=(\d+)KB',re.I)
+# On newer HotSpot versions NMT reports a top-level "Metaspace" line.
+# JDK 11 can report the same class metadata memory under "Class > Metadata".
+# This is NOT the "Class" category's total committed bytes (which includes
+# compressed class space). We never substitute that total for Metaspace.
+META=re.compile(r'^\s*[-+]\s*Metaspace\s*\([^\n)]*?\bcommitted\s*=\s*(\d+)\s*KB\b',re.I|re.M)
+METADATA_HEADER=re.compile(r'^\s*\(\s*Metadata\s*:\s*\)\s*$',re.I|re.M)
+COMMITTED_KB=re.compile(r'\bcommitted\s*=\s*(\d+)\s*KB\b',re.I)
+
 
 def load_phase29():
     spec=importlib.util.spec_from_file_location('phase29_lifecycle',ROOT/'scripts/phase29-was-lifecycle.py')
@@ -39,9 +46,34 @@ def count_webapp_loaders(histogram):
         return 0
     return sum(count for _, count, _ in matches)
 
-def metaspace_committed_kb(nmt):
+def metaspace_metric(nmt):
+    """Return (committed_kib, source_or_failure) without inventing metrics.
+
+    NMT reporting differs across JDK releases: JDK 11 may use an indented
+    Metadata sub-block under Class rather than a top-level Metaspace category.
+    The two measurements are tracked separately in the report, and never
+    compared across JVMs; only samples from one running JVM are compared.
+    """
+    if re.search(r'native memory tracking is not enabled|native memory tracking.*disabled',nmt,re.I):
+        return None,'NMT_DISABLED'
     m=META.search(nmt)
-    return int(m.group(1)) if m else None
+    if m:
+        return int(m.group(1)),'NMT_METASPACE_CATEGORY'
+    h=METADATA_HEADER.search(nmt)
+    if h:
+        # The "Metadata:" header's next line contains reserved/committed.
+        # Do not accidentally read the adjacent "Class space:" counters.
+        for line in nmt[h.end():].splitlines()[:3]:
+            if not line.strip():continue
+            m=COMMITTED_KB.search(line)
+            if m and 'reserved' in line.lower():
+                return int(m.group(1)),'NMT_CLASS_METADATA'
+            break
+    return None,'NMT_FORMAT_UNRECOGNIZED'
+
+def metaspace_committed_kb(nmt):
+    # Preserve original public helper signature used by existing tests.
+    return metaspace_metric(nmt)[0]
 
 def jcmd(pid, command, timeout=60):
     result=subprocess.run(['jcmd',str(pid),*command],capture_output=True,text=True,timeout=timeout)
@@ -56,8 +88,9 @@ def sample(pid,base,cycle):
     nmt=jcmd(pid,['VM.native_memory','summary','scale=KB'])
     (base/('histogram-%02d.txt'%cycle)).write_text(hist,encoding='utf-8')
     (base/('nmt-%02d.txt'%cycle)).write_text(nmt,encoding='utf-8')
+    committed,source=metaspace_metric(nmt)
     return {'cycle':cycle,'reachableWebappClassLoaderInstances':count_webapp_loaders(hist),
-            'metaspaceCommittedKiB':metaspace_committed_kb(nmt),
+            'metaspaceCommittedKiB':committed,'metaspaceMetricSource':source,
             'gcCommandSucceeded':bool(gc.strip())}
 
 def run(app,home,output,cycles,requests,sha, max_growth_kib):
@@ -108,6 +141,8 @@ def run(app,home,output,cycles,requests,sha, max_growth_kib):
                 last_loaders={x['loader'] for x in entries}
                 # After replaying HTTP requests, force a reachable-object histogram.
                 reading=sample(proc.pid,output,index)
+                print('PHASE30_NMT_SAMPLE app=%s cycle=%d committedKiB=%s source=%s' % (
+                    app,index,reading['metaspaceCommittedKiB'],reading['metaspaceMetricSource']),flush=True)
                 reading['newLoaderIds']=sorted(new_loaders)
                 reading['methodEntriesForNewLoader']=sum(x['observedMethodEntries'] for x in entries if x['loader'] in new_loaders)
                 summary.append(reading)
@@ -118,9 +153,18 @@ def run(app,home,output,cycles,requests,sha, max_growth_kib):
     if len(summary)!=cycles:fails.append('INCOMPLETE_REDEPLOY_CYCLES')
     if any(r['reachableWebappClassLoaderInstances']!=1 for r in summary):
         fails.append('PREVIOUS_LOADER_POSSIBLY_RETAINED_OR_HISTOGRAM_UNEXPECTED')
-    if any(r['metaspaceCommittedKiB'] is None for r in summary):fails.append('NMT_METASPACE_UNAVAILABLE')
+    if any(r['metaspaceCommittedKiB'] is None for r in summary):
+        fails.append('NMT_METASPACE_UNAVAILABLE')
+        if any(r.get('metaspaceMetricSource')=='NMT_DISABLED' for r in summary):
+            fails.append('NMT_DISABLED_CHECK_CATALINA_OPTS')
+        if any(r.get('metaspaceMetricSource')=='NMT_FORMAT_UNRECOGNIZED' for r in summary):
+            fails.append('NMT_FORMAT_UNRECOGNIZED_INSPECT_NMT_TXT')
+    metric_sources={r.get('metaspaceMetricSource') for r in summary
+                    if r.get('metaspaceCommittedKiB') is not None}
+    if len(metric_sources)>1:
+        fails.append('METASPACE_METRIC_SOURCE_CHANGED_WITHIN_ONE_JVM')
     growth=None
-    if len(summary)>=2 and all(r['metaspaceCommittedKiB'] is not None for r in summary):
+    if len(summary)>=2 and len(metric_sources)==1 and all(r['metaspaceCommittedKiB'] is not None for r in summary):
         # Growth from second sample reduces startup warmup bias.
         growth=summary[-1]['metaspaceCommittedKiB']-summary[1]['metaspaceCommittedKiB']
         if growth>max_growth_kib:fails.append('METASPACE_GROWTH_EXCEEDS_STAGING_THRESHOLD')
